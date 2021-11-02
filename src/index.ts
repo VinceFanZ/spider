@@ -31,13 +31,14 @@ async function main() {
   const page = await browser.newPage()
 
   for (let index = 0; index < urls.length; index++) {
-    await page.goto(urls[index], {
+    const pageUrl = urls[index]
+    await page.goto(pageUrl, {
       waitUntil: 'networkidle2', // 等待网络空闲时，在跳转加载页面
     })
     await timeout(1)
 
-    let result = await page.evaluate(() => {
-      let res = []
+    const result = await page.evaluate(() => {
+      const res = []
       const specImg = document.querySelector('#spec-img') as HTMLImageElement
       console.log(specImg.src)
       res.push(specImg.src)
@@ -45,15 +46,17 @@ async function main() {
     })
 
     result.forEach((item) => {
-      writeImage(item)
+      writeImage(item, pageUrl)
     })
 
     console.log(result)
   }
 }
 
-function writeImage(url: string) {
-  const writeStream = fs.createWriteStream(`./images/${url.slice(1 + url.lastIndexOf('/'))}`)
+function writeImage(url: string, pageUrl: string) {
+  const pageUrlMatch = pageUrl.match(/com\/(.*)\.html/)
+  const goodsId = pageUrlMatch && pageUrlMatch[1] || 'test'
+  const writeStream = fs.createWriteStream(`./images/${goodsId}${url.slice(url.lastIndexOf('.'))}`)
   const readStream = request(url)
 
   readStream.pipe(writeStream)
